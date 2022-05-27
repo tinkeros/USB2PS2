@@ -6,7 +6,7 @@ I built this project in my spare time while helping test out the <a href="https:
 
 If you are a DYI kind of person who likes to tinker with 3D printing/Arduinos/PIs/electronics, then this maybe useful to you.  This is a do at your own risk project!  I am not an electrical engineer and if you do this wrong you could fry your Arduino/Computer/PI or possibly even set your house on fire.  Only play with electronics if you feel like you are up to the task and accepting of the risks.
 
-The PS/2 keyboard code is from ps2dev, the PS/2 mouse code is code adapted from USB4VC.  The PI SD card image is USB4VC image which has been modified to communicate with an Arduino over serial instead of a USB4VC IBM PC protocol card using SPI.
+The PS/2 keyboard code is from ps2dev, the PS/2 mouse code is code adapted from USB4VC.  The PI SD card image is a USB4VC image which has been modified to communicate with an Arduino over serial instead of a USB4VC IBM PC protocol card using SPI.
 
 ### Suggested supplies:
 - Arduino Uno (or other version if you're willing to adapt the code yourself)
@@ -22,8 +22,8 @@ The PS/2 keyboard code is from ps2dev, the PS/2 mouse code is code adapted from 
 - ps2dev (I used version 0.0.3)
 
 ### Software Installation:
-Installation simply requires extracting and flashing the usb4vc_arduino_mod.img.xz PI image to a micro SD card.  It will auto resize the filesystem to fill the card on first boot and then reboot.  The username/password is pi/raspberry.  
-The Arduino is flashed with the sketch that can be found in ArduinoUno/pi_to_ps2_keyboard_mouse/pi_to_ps2_keyboard_mouse.  Be sure to modify the defined pin numbers at the top of the sketch to the values you desire to use.
+Installation simply requires extracting and flashing the <a href="https://github.com/tinkeros/USB2PS2/releases/download/v0.1.0-beta/usb4vc_arduino_mod.img.xz">usb4vc_arduino_mod.img.xz</a> PI image to a micro SD card.  It will auto resize the filesystem to fill the card on first boot and then reboot.  The username/password is pi/raspberry.  
+The Arduino is flashed with the sketch that can be found in <a href="https://github.com/tinkeros/USB2PS2/tree/master/ArduinoUno/pi_to_ps2_keyboard_mouse/pi_to_ps2_keyboard_mouse">ArduinoUno/pi_to_ps2_keyboard_mouse/pi_to_ps2_keyboard_mouse</a>.  Be sure to modify the defined pin numbers at the top of the sketch to the values you desire to use.
 
 ### Software and circuit connections overview:
 The PI captues keyboard/mouse events from attached USB devices and sends them to the Arduino over the UART.  You might be able to make this work by connecting just 2 wires between the Arduino and PI.  The PS/2 ports are connected to data/clock pins you choose on the Arduino and two ground pins.  More details on the connection setup can be found below.
