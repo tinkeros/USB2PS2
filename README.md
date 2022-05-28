@@ -26,7 +26,7 @@ Installation simply requires extracting and flashing the <a href="https://github
 The Arduino is flashed with the sketch that can be found in <a href="https://github.com/tinkeros/USB2PS2/tree/master/ArduinoUno/pi_to_ps2_keyboard_mouse/pi_to_ps2_keyboard_mouse">ArduinoUno/pi_to_ps2_keyboard_mouse/pi_to_ps2_keyboard_mouse</a>.  Be sure to modify the defined pin numbers at the top of the sketch to the values you desire to use.
 
 ### Software and circuit connections overview:
-The PI captues keyboard/mouse events from attached USB devices and sends them to the Arduino over the UART.  You might be able to make this work by connecting just 2 wires between the Arduino and PI.  The PS/2 ports are connected to data/clock pins you choose on the Arduino and two ground pins.  More details on the connection setup can be found below.
+The PI captues keyboard/mouse events from attached USB devices and sends them to the Arduino over the UART.  You might be able to make this work by connecting just 2 wires between the Arduino and PI.  The PS/2 ports are connected to data/clock pins you choose on the Arduino and two ground pins.  More details on the connection setup can be found below.  If everything is connected right after the Arduino is powered up and the PI is fully booted it should just work and automatically start relaying USB keyboard/mouse events to the Arduino which will convert them to PS/2.  PI zeros are slow and it took mine about 2 minutes to fully be up and ready the first time (due to the need to resize the filesystem and reboot).
 
 ### Supply notes:
 - You can get away no female PS/2 ports and with just one male to male PS/2 cable if it is long enough and you cut it in half and connect/solder the wires directly to the Arduino.
