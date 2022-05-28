@@ -22,7 +22,7 @@ The PS/2 keyboard code is from ps2dev, the PS/2 mouse code is code adapted from 
 - ps2dev (I used version 0.0.3)
 
 ### Software Installation:
-Installation simply requires extracting and flashing the <a href="https://github.com/tinkeros/USB2PS2/releases/download/v0.1.0-beta/usb4vc_arduino_mod.img.xz">usb4vc_arduino_mod.img.xz</a> PI image to a micro SD card.  It will auto resize the filesystem to fill the card on first boot and then reboot.  The username/password is pi/raspberry.  
+Installation simply requires extracting and flashing the <a href="https://github.com/tinkeros/USB2PS2/releases/download/v0.1.1-beta/usb4vc_arduino_mod.img.xz">usb4vc_arduino_mod.img.xz</a> PI image to a micro SD card.  It will auto resize the filesystem to fill the card on first boot and then reboot.  The username/password is pi/raspberry.  
 The Arduino is flashed with the sketch that can be found in <a href="https://github.com/tinkeros/USB2PS2/tree/master/ArduinoUno/pi_to_ps2_keyboard_mouse/pi_to_ps2_keyboard_mouse">ArduinoUno/pi_to_ps2_keyboard_mouse/pi_to_ps2_keyboard_mouse</a>.  Be sure to modify the defined pin numbers at the top of the sketch to the values you desire to use.
 
 ### Software and circuit connections overview:
