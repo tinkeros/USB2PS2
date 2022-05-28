@@ -1,8 +1,8 @@
 /*
- * This file includes code from the USB4VC project
- * which has been modifed to work on an Arduino instead
- * of the STM microcontroller the protocol board uses
- */
+   This file includes code from the USB4VC project
+   which has been modifed to work on an Arduino instead
+   of the STM microcontroller the protocol board uses
+*/
 
 #ifndef __PS2MOUSE_H
 #define __PS2MOUSE_H
@@ -17,7 +17,7 @@ extern "C" {
 #define PS2_BUS_INHIBIT 2
 #define PS2_BUS_REQ_TO_SEND 1
 #define PS2_BUS_UNKNOWN 0
-#define PS2_OUT_BUF_MAXSIZE 8
+#define PS2_OUT_BUF_MAXSIZE 16
 
 typedef struct
 {

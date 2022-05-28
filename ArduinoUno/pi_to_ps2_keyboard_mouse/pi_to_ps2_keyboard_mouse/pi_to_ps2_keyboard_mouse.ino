@@ -1,8 +1,8 @@
 /*
- * This file includes code from the USB4VC project
- * which has been modifed to work on an Arduino instead
- * of the STM microcontroller the protocol board uses
- */
+   This file includes code from the USB4VC project
+   which has been modifed to work on an Arduino instead
+   of the STM microcontroller the protocol board uses
+*/
 
 #include <ps2dev.h>
 #include "ps2mouse.h"
@@ -175,6 +175,7 @@ const uint8_t linux_keycode_to_ps2_scancode_lookup_special_codeset2[LINUX_KEYCOD
 static uint8_t pkt[32];
 
 static mouse_event latest_mouse_event;
+static mouse_event null_mouse_event;
 static gamepad_event latest_gamepad_event;
 static uint8_t enabled = 1;
 
@@ -189,6 +190,8 @@ static uint8_t ps2mouse_host_cmd = 0, ps2mouse_bus_status = 0;
 static ps2_outgoing_buf my_ps2_outbuf;
 
 static uint32_t last_kb_status_check;
+static uint32_t last_ms_status_check;
+
 static uint8_t kbd_ms = 0;
 
 
@@ -239,6 +242,11 @@ uint8_t ps2kb_press_key_scancode_2(uint8_t linux_keycode, uint8_t linux_keyvalue
 
 static void process_keyboard_pkt(uint8_t *kb_pkt)
 {
+  int i;
+  // Additional pkt validation
+  if (0xaa != kb_pkt[3])
+    return;
+
   ps2kb_press_key_scancode_2(kb_pkt[4], kb_pkt[6]);
 }
 
@@ -249,11 +257,6 @@ static int16_t byte_to_int16_t(uint8_t lsb, uint8_t msb)
 
 static void ps2mouse_update(void)
 {
-  if (!latest_mouse_event.button_extra) {
-    // nothing to send now
-    return;
-  }
-
   ps2mouse_bus_status = ps2mouse_get_bus_status();
   if (ps2mouse_bus_status == PS2_BUS_INHIBIT)
   {
@@ -263,7 +266,12 @@ static void ps2mouse_update(void)
   else if (ps2mouse_bus_status == PS2_BUS_REQ_TO_SEND)
   {
     ps2mouse_read(&ps2mouse_host_cmd, 10);
-    ps2mouse_host_req_reply(ps2mouse_host_cmd, &latest_mouse_event);
+    ps2mouse_host_req_reply(ps2mouse_host_cmd, &null_mouse_event);
+    return;
+  }
+
+  if (!latest_mouse_event.button_extra) {
+    // nothing to send now
     return;
   }
 
@@ -283,30 +291,42 @@ static void ps2mouse_update(void)
   }
 }
 
-static void process_mouse_pkt(uint8_t *backup_spi1_recv_buf)
+static void process_mouse_pkt(uint8_t *ms_pkt)
 {
-  int res = 0;
+  int i, res = 0;
+  int8_t *ms_pkt_signed = (int8_t*)ms_pkt;
+  latest_mouse_event.button_extra = 0;
+
+  // Additional pkt validation
+  if (0x55 != ms_pkt[3])
+    return;
 
   // Modified USB4VC packet pruned to 16 bytes
-  latest_mouse_event.movement_x = byte_to_int16_t(backup_spi1_recv_buf[4], backup_spi1_recv_buf[5]);
-  latest_mouse_event.movement_y = -1 * byte_to_int16_t(backup_spi1_recv_buf[6], backup_spi1_recv_buf[7]);
+  //latest_mouse_event.movement_x = byte_to_int16_t(ms_pkt[4], ms_pkt[5]);
+  //latest_mouse_event.movement_y = -1 * byte_to_int16_t(ms_pkt[6], ms_pkt[7]);
+  latest_mouse_event.movement_x = ms_pkt_signed[4];
+  latest_mouse_event.movement_y = ms_pkt_signed[5];
   latest_mouse_event.scroll_vertical = 0;
   latest_mouse_event.scroll_horizontal = 0;
-  latest_mouse_event.button_left = backup_spi1_recv_buf[13];
-  latest_mouse_event.button_right = backup_spi1_recv_buf[14];
-  latest_mouse_event.button_middle = backup_spi1_recv_buf[15];
+  cur_buttons[0] = latest_mouse_event.button_left = ms_pkt[6] % 4;
+  cur_buttons[1] = latest_mouse_event.button_right = ms_pkt[6] / 4;
+  //cur_buttons[2]=latest_mouse_event.button_middle = ms_pkt[15];
+
+
+  if ( ((0 == latest_mouse_event.movement_x) && (0 == latest_mouse_event.movement_y))
+       && (cur_buttons[0] == last_buttons[0])
+       && (cur_buttons[1] == last_buttons[1]) ) {
+    // skip this redundant packet
+    return;
+  }
 
   latest_mouse_event.button_side = 0;
   latest_mouse_event.button_extra = 1;  // using this as a "this event needs to be sent flag"
 
+  last_buttons[0] = cur_buttons[0];
+  last_buttons[1] = cur_buttons[1];
+  ps2mouse_update();
 
-  if (0x55 == backup_spi1_recv_buf[3])
-  {
-    ps2mouse_update();
-  }
-  else {
-    latest_mouse_event.button_extra = 0;
-  }
 }
 
 static void process_gamepad_pkt(uint8_t *backup_spi1_recv_buf)
@@ -331,7 +351,7 @@ void setup() {
 
   keyboard.keyboard_init();
   digitalWrite(LED_BUILTIN, HIGH);
-  Serial.begin(1000000);
+  Serial.begin(57600);
 
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
@@ -348,12 +368,23 @@ void setup() {
   mouse_dx = 0;
   mouse_dy = 0;
 
+  null_mouse_event.movement_x = 0;
+  null_mouse_event.movement_y = 0;
+  null_mouse_event.scroll_vertical = 0;
+  null_mouse_event.scroll_horizontal = 0;
+  null_mouse_event.button_left = 0;
+  null_mouse_event.button_middle = 0;
+  null_mouse_event.button_right = 0;
+  null_mouse_event.button_side = 0;
+  null_mouse_event.button_extra = 0;
+
   latest_mouse_event.button_extra = 0;
 
   ps2mouse_init(PS2_MOUSE_CLOCK_PIN, PS2_MOUSE_CLOCK_PIN, PS2_MOUSE_DATA_PIN, PS2_MOUSE_DATA_PIN);
   ps2mouse_enable_reporting();
 
   last_kb_status_check = millis();
+  last_ms_status_check = millis();
   digitalWrite(LED_BUILTIN, LOW);
 }
 
@@ -370,90 +401,99 @@ void loop() {
     }
     last_kb_status_check = millis();
   }
-
-
-  ps2mouse_update();
+  else if (millis() - last_ms_status_check > 5) {
+    ps2mouse_update();
+    last_ms_status_check = millis();
+  }
 
 }
 
 void serialEvent()
 {
   int i, tmp;
-  uint8_t inByte, inByte2, inByte3;
+  uint8_t inByte, inByte2, inByte3, inByte4;
 
-  inByte = Serial.read();
-  while (Serial.available() == 0) {
-    ;
-  }
-  inByte2 = Serial.read();
-  while (Serial.available() == 0) {
-    ;
-  }
-  inByte3 = Serial.read();
 
-  if ((SPI_MOSI_MAGIC != inByte) || ( 0 != inByte2 ) || (inByte3 > SPI_MOSI_MSG_TYPE_GAMEPAD_EVENT_MAPPED)) {
+  if (Serial.available() > 5) {
+    inByte = Serial.read();
+    inByte2 = Serial.read();
+    inByte3 = Serial.read();
+    inByte4 = Serial.read();
 
-    while (Serial.available() > 0) {
-      inByte = inByte2;
-      inByte2 = inByte3;
-      inByte3 = Serial.read();
-      if ((SPI_MOSI_MAGIC == inByte) && ( 0 == inByte2 ) && (inByte3 <= SPI_MOSI_MSG_TYPE_GAMEPAD_EVENT_MAPPED)) {
-        goto pkt_start;
-      }
-    }
-  }
-  else {
-pkt_start:
-    pkt[0] = inByte;
-    pkt[1] = inByte2;
-    pkt[2] = inByte3;
-    i = 3;
-    // Got what seems to be a valid packet, read more bytes and validate
-    while (i < 16)
-    {
-      while (!Serial.available()) {
-        delay(1);
-      }
-      tmp = Serial.read();
-      if (tmp >= 0) {
-        pkt[i++] = tmp;
-      }
-      else {
-        // Bail out if we don't receive more bytes in a timely manner
-        break;
-      }
-    }
-    if ((i != 16) || (pkt[8] != 0xff) || (pkt[9] != 0xff)) {
-      // Additional validation, if we get here things are not
-      // looking right so we flush the serial port and then
-      // wait for the next good packet
+    if ((SPI_MOSI_MAGIC != inByte) || ( 0 != inByte2 ) || (inByte3 > SPI_MOSI_MSG_TYPE_GAMEPAD_EVENT_MAPPED)) {
+
       while (Serial.available() > 0) {
-        inByte = Serial.read();
+        inByte = inByte2;
+        inByte2 = inByte3;
+        inByte3 = inByte4;
+        inByte4 = Serial.read();
+        if ((SPI_MOSI_MAGIC == inByte) && ( 0 == inByte2 ) && (inByte3 <= SPI_MOSI_MSG_TYPE_GAMEPAD_EVENT_MAPPED)) {
+          if ((inByte4 == 0x55) || (inByte4 == 0xaa)) {
+            goto pkt_start;
+          }
+        }
       }
     }
     else {
-      // It appears we got a "good" packet, first
-      // try to clear out left over mouse events first (if any)
-      ps2mouse_update();
-      // Handle packet
-      if (SPI_MOSI_MSG_TYPE_KEYBOARD_EVENT > pkt[2])
+pkt_start:
+      pkt[0] = inByte;
+      pkt[1] = inByte2;
+      pkt[2] = inByte3;
+      pkt[3] = inByte4;
+      i = 4;
+      // Got what seems to be a valid packet, read more bytes and validate
+      while (i < 7)
       {
-        // We got an unknown event that isn't implemented by this sketch
+        while (!Serial.available()) {
+          delayMicroseconds(10);
+        }
+        tmp = Serial.read();
+        if (tmp >= 0) {
+          pkt[i++] = tmp;
+        }
+        else {
+          // Bail out if we don't receive more bytes in a timely manner
+          break;
+        }
       }
-      else if (SPI_MOSI_MSG_TYPE_KEYBOARD_EVENT == pkt[2])
-      {
-        process_keyboard_pkt(pkt);
-      }
-      else if (SPI_MOSI_MSG_TYPE_MOUSE_EVENT == pkt[2])
-      {
-        process_mouse_pkt(pkt);
-      }
-      else if (SPI_MOSI_MSG_TYPE_GAMEPAD_EVENT_MAPPED == pkt[2])
-      {
-        process_gamepad_pkt(pkt);
+      if (i != 7) {
+        // Additional validation, if we get here things are not
+        // looking right so we flush the serial port and then
+        // wait for the next good packet
+        while (Serial.available() > 0) {
+          inByte = Serial.read();
+        }
       }
       else {
-        // We got an unknown event that isn't implemented by this sketch
+        // It appears we got a "good" packet, first
+
+        // Handle packet
+        if (SPI_MOSI_MSG_TYPE_KEYBOARD_EVENT > pkt[2])
+        {
+          // We got an unknown event that isn't implemented by this sketch
+        }
+        else if (SPI_MOSI_MSG_TYPE_KEYBOARD_EVENT == pkt[2])
+        {
+          process_keyboard_pkt(pkt);
+        }
+        else if (SPI_MOSI_MSG_TYPE_MOUSE_EVENT == pkt[2])
+        {
+
+          // try to clear out left over mouse events first (if any)
+          if (latest_mouse_event.button_extra) {
+            ps2mouse_update();
+          }
+          if (!latest_mouse_event.button_extra) {
+            process_mouse_pkt(pkt);
+          }
+        }
+        else if (SPI_MOSI_MSG_TYPE_GAMEPAD_EVENT_MAPPED == pkt[2])
+        {
+          process_gamepad_pkt(pkt);
+        }
+        else {
+          // We got an unknown event that isn't implemented by this sketch
+        }
       }
     }
   }

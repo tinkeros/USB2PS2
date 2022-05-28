@@ -1,8 +1,8 @@
 /*
- * This file includes code from the USB4VC project
- * which has been modifed to work on an Arduino instead
- * of the STM microcontroller the protocol board uses
- */
+   This file includes code from the USB4VC project
+   which has been modifed to work on an Arduino instead
+   of the STM microcontroller the protocol board uses
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +14,8 @@
 
 #define CLKHALF 18
 #define CLKFULL 36
+//#define CLKHALF 20
+//#define CLKFULL 40
 #define BYTEWAIT 700
 #define BYTEWAIT_END 250
 #define PS2MOUSE_BUS_TIMEOUT_MS 30
@@ -280,8 +282,10 @@ void ps2mouse_host_req_reply(uint8_t cmd, mouse_event* mevent)
       reset_accumulators();
       PS2MOUSE_SENDACK();
       mouse_device_id = 0; // standard ps/2 mouse
-      if (sample_rate_history_index > 2 && sample_rate_history[sample_rate_history_index - 1] == 80 && sample_rate_history[sample_rate_history_index - 2] == 100 && sample_rate_history[sample_rate_history_index - 3] == 200)
+      /*
+        if (sample_rate_history_index > 2 && sample_rate_history[sample_rate_history_index - 1] == 80 && sample_rate_history[sample_rate_history_index - 2] == 100 && sample_rate_history[sample_rate_history_index - 3] == 200)
         mouse_device_id = 3; // intellimouse with scroll wheel
+      */
       ps2mouse_write(mouse_device_id, PS2MOUSE_WRITE_DEFAULT_TIMEOUT_MS);
       break;
     case 0xF0: // set remote mode
@@ -421,16 +425,31 @@ uint8_t ps2mouse_get_outgoing_data(mouse_event* this_event, ps2_outgoing_buf* pb
     pbuf->data[0] = pbuf->data[0] | 0x2;
   if (this_event->button_middle)
     pbuf->data[0] = pbuf->data[0] | 0x4;
-  if (this_event->movement_x < 0)
+  if (this_event->movement_x < 0) {
     pbuf->data[0] = pbuf->data[0] | 0x10;
-  if (this_event->movement_y < 0)
+    pbuf->data[1] = 256 + this_event->movement_x;
+  }
+  else {
+    pbuf->data[1] = (uint8_t)(this_event->movement_x);
+  }
+  if (this_event->movement_y > 0) {
     pbuf->data[0] = pbuf->data[0] | 0x20;
+    pbuf->data[2] = 256 - this_event->movement_y;
+  }
+  else {
+    pbuf->data[2] = -(this_event->movement_y);
+  }
 
-  pbuf->data[1] = (uint8_t)(this_event->movement_x);
-  pbuf->data[2] = (uint8_t)(this_event->movement_y);
-  pbuf->data[3] = (uint8_t)(this_event->scroll_vertical);
-  if (mouse_device_id != 0)
+  //pbuf->data[1] = (uint8_t)(this_event->movement_x);
+  //pbuf->data[2] = (uint8_t)(this_event->movement_y);
+  //pbuf->data[3] = (uint8_t)(this_event->scroll_vertical);
+
+  /*
+    pbuf->data[3] = 0;
+    if (mouse_device_id != 0)
     pbuf->size = PS2MOUSE_PACKET_SIZE_INTELLIMOUSE;
+  */
+  pbuf->size = PS2MOUSE_PACKET_SIZE_GENERIC;
   return 0;
 }
 
@@ -501,8 +520,9 @@ uint8_t ps2mouse_send_update(ps2_outgoing_buf* pbuf)
   for (int i = 0; i < pbuf->size; ++i)
   {
     // return error if inhibited or interrupted while transmitting
-    if (ps2mouse_write(pbuf->data[i], 200) != 0)
+    if (ps2mouse_write(pbuf->data[i], 200) != 0) {
       return 1;
+    }
   }
   return 0;
 }
