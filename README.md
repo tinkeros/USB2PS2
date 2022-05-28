@@ -29,7 +29,7 @@ The Arduino is flashed with the sketch that can be found in <a href="https://git
 The PI captues keyboard/mouse events from attached USB devices and sends them to the Arduino over the UART.  You might be able to make this work by connecting just 2 wires between the Arduino and PI.  The PS/2 ports are connected to data/clock pins you choose on the Arduino and two ground pins.  More details on the connection setup can be found below.  If everything is connected right after the Arduino is powered up and the PI is fully booted it should just work and automatically start relaying USB keyboard/mouse events to the Arduino which will convert them to PS/2.  PI zeros are slow and it took mine about 2 minutes to fully be up and ready the first time (due to the need to resize the filesystem and reboot).
 
 ### Supply notes:
-- You can get away no female PS/2 ports and with just one male to male PS/2 cable if it is long enough and you cut it in half and connect/solder the wires directly to the Arduino.
+- You can get away with no female PS/2 ports and with just one male to male PS/2 cable if it is long enough and you cut it in half and connect/solder the wires directly to the Arduino.
 - You might be able to get away with just connecting the PI TX pin to the Arduino RX pin or use a simple resister/transistor based circuit to convert the logic level instead of using a level converter.  
 - There are Arduino Uno clones which provide additional headers you can use to solder components onto easily.  Here is an <a href="https://github.com/tinkeros/USB2PS2/raw/master/images/ArduinoClone.jpg">example</a> of one such board I bought cheap off AliExpress.
 
@@ -67,7 +67,7 @@ PS/2 is bitbanged so you may use any analog or digital pins (other than those us
 - I do not connect the 5V pin on any of the PS/2 connectors or use them to draw power.  I highly advise against drawing power from the PS/2 ports.
 
 ## 3D printed PCI brackets for Arduino UNO/Raspberry PI Zero:
-You can contain this project nicely inside your PC if you have two free PCI slots.  There are many 3D printable PCI brackets available for Raspberry PIs and Arduinos (just search thingiverse).  I've included the two STL files I used in the STL folder <a href="https://github.com/tinkeros/USB2PS2/raw/master/STL/pci_arduino.stl">Arduino UNO PCI bracket</a> and <a href="https://github.com/tinkeros/USB2PS2/raw/master/STL/single_zero_pi_pci.stl">PI zero PCI bracket</a>  Even if you do not own a 3D printer there are many online services you can use to get someone else to print them for you cheaply.  After printing you will want to cut/drill an extra slot into one of them for the PS/2 cables to go through.
+You can contain this project nicely inside your PC if you have two free PCI slots.  There are many 3D printable PCI brackets available for Raspberry PIs and Arduinos (just search thingiverse).  I've included the two STL files I used in the STL folder <a href="https://github.com/tinkeros/USB2PS2/raw/master/STL/pci_arduino.stl">Arduino UNO PCI bracket</a> and <a href="https://github.com/tinkeros/USB2PS2/raw/master/STL/single_zero_pi_pci.stl">PI zero PCI bracket</a>  Even if you do not own a 3D printer there are many online services you can use to get someone else to print them for you cheaply.  After printing you will want to cut/drill an extra slot into one of them for the PS/2 cables to go through.  You may also have to use a knife or drill to remove some material from the brackets to make things fit nicely depending on the print quality used.
 
 ### Example Arduino / PI mounted in brackets (note extra slot cut into the PI bracket for the PS/2 cables):
 
@@ -82,7 +82,7 @@ You can contain this project nicely inside your PC if you have two free PCI slot
   <img src="https://github.com/tinkeros/USB2PS2/raw/master/images/Install_without_cables.jpg" />
 </p>
 
-### Installed setup with PS/2 cables, two USB cables powering Arduino and PI, and one micro USB to USB-A cable with bluetooth USB keyboard mouse combo reciever:
+### Installed setup with PS/2 cables, two USB cables powering Arduino and PI, and one micro USB to USB-A cable with a wireless USB keyboard/ mouse combo reciever:
 
 <p align="center">
   <img src="https://github.com/tinkeros/USB2PS2/raw/master/images/Full_install.jpg" />
@@ -90,7 +90,7 @@ You can contain this project nicely inside your PC if you have two free PCI slot
 
 
 ## Cheaply making PS/2 cables:
-Real PS/2 cables are becoming expensive because they are rarely used and not mass produced anymore.  You are free to use them, however I would like to suggest an alternative that may be much cheaper and may work better for this particular project.  There is an abundance of cheap to obtain PS/2 to USB adapters and USB-A to A cables (just check eBay).  You can use these to make PS/2 male to male cables or for the case of this project you can simply cut the USB cord and connect/solder the proper wires to the proper Arduino pins.  If you are willing to solder wires and have some old USB-A cables of any type laying around, you can skip buying an A-A cable, buy the PS/2 male to USB-A female adapters only and just chop one end off your existing cables.
+Real PS/2 cables are becoming expensive because they are rarely used and not mass produced anymore.  You are free to use them, however I would like to suggest an alternative that may be much cheaper and may work better for this particular project.  There is an abundance of cheap to obtain PS/2 to USB adapters and USB-A to A cables (just check eBay).  You can use these to make PS/2 male to male cables or for the case of this project you can simply cut the USB cord and connect/solder the proper wires to the proper Arduino pins.  If you have some old USB cables of laying around, you can skip buying an A-A cable, buy the PS/2 male to USB-A female adapters only and just chop one end off your existing cables.  Just know that whatever cable you use must have both the power and data wires for it to work.  You will need to connect the wires which go to the ground, clock, and data pins of the PS/2 connector.  These should be the black, green and white wires, but be sure to check the connections just to be sure your cable is not wired differently!
 
 <p align="center">
   <img src="https://github.com/tinkeros/USB2PS2/raw/master/images/USB2PS2cable.jpg" />
